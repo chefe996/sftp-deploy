@@ -1,7 +1,7 @@
 {
   "name": "sftp-deploy",
   "version": "1.0.0",
-  "description": "Простой SFTP-деплой для фронтенд-проектов. Загружает папку сборки на сервер.",
+  "description": "Простой FTP/SFTP-деплой для фронтенд-проектов. Загружает папку сборки на сервер.",
   "type": "module",
   "bin": {
     "sftp-deploy": "./bin/cli.js"
@@ -11,9 +11,16 @@
     "lib/",
     "deploy.config.example.js"
   ],
-  "keywords": ["sftp", "deploy", "upload", "vite", "frontend"],
+  "keywords": [
+    "sftp",
+    "deploy",
+    "upload",
+    "vite",
+    "frontend"
+  ],
   "license": "MIT",
   "dependencies": {
+    "basic-ftp": "^5.2.0",
     "ssh2-sftp-client": "^12.0.1"
   }
 }

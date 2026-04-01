@@ -1,6 +1,6 @@
 # sftp-deploy
 
-Простой CLI для деплоя фронтенд-проектов через SFTP.
+Простой CLI для деплоя фронтенд-проектов через FTP или SFTP.
 
 Загружает папку сборки (`dist/`) на удалённый сервер: очищает удалённую папку, сохраняя указанные файлы, и заливает новую версию.
 
@@ -48,56 +48,68 @@ deploy.config.js
 
 ## Конфиг
 
-Файл `deploy.config.js`:
+### SFTP (по умолчанию)
 
 ```js
 export default {
+  protocol: 'sftp',              // можно не указывать — sftp по умолчанию
   host: 'example.com',
-  port: 22,                        // по умолчанию 22
+  port: 22,
   username: 'user',
-  password: 'secret',              // или privateKey (см. ниже)
+  password: 'secret',            // или privateKey (см. ниже)
   remotePath: '/var/www/html/my-project',
-  localPath: './dist',             // по умолчанию ./dist
+  localPath: './dist',
   keepFiles: [
-    // Файлы и папки на сервере, которые НЕ удаляются при деплое
     '.htaccess',
     'robots.txt',
     'sitemap.xml',
     'uploads/',
   ],
-  exclude: [
-    // Файлы из localPath, которые НЕ загружаются на сервер (опционально)
-    // 'sourcemaps/',
-    // '*.map',
-  ],
 };
 ```
 
-### Аутентификация по SSH-ключу
-
-Вместо `password` укажите путь к приватному ключу:
+### FTP
 
 ```js
 export default {
-  // ...
-  privateKey: '/home/user/.ssh/id_rsa',
-  // или содержимое ключа строкой: privateKey: '-----BEGIN OPENSSH PRIVATE KEY-----...'
+  protocol: 'ftp',
+  host: 'example.com',
+  port: 21,
+  username: 'user',
+  password: 'secret',
+  secure: false,                 // false = plain FTP, true = FTPS explicit, 'implicit' = FTPS implicit
+  remotePath: '/public_html/my-project',
+  localPath: './dist',
+  keepFiles: ['.htaccess', 'robots.txt'],
 };
 ```
 
-### Параметры конфига
+### Аутентификация по SSH-ключу (только SFTP)
+
+```js
+export default {
+  protocol: 'sftp',
+  // ...
+  privateKey: '/home/user/.ssh/id_rsa',
+  // или содержимое ключа строкой
+};
+```
+
+### Все параметры конфига
 
 | Поле | Обязательный | По умолчанию | Описание |
 |---|---|---|---|
+| `protocol` | нет | `sftp` | Протокол: `sftp` или `ftp` |
 | `host` | да | — | Хост сервера |
-| `port` | нет | `22` | SSH-порт |
+| `port` | нет | `22` (sftp) / `21` (ftp) | Порт |
 | `username` | да | — | Логин |
 | `password` | * | — | Пароль |
-| `privateKey` | * | — | Путь или содержимое SSH-ключа |
+| `privateKey` | * | — | Путь или содержимое SSH-ключа (только SFTP) |
+| `secure` | нет | `false` | Режим TLS для FTP: `false`, `true`, `'implicit'` |
 | `remotePath` | да | — | Папка на сервере |
 | `localPath` | нет | `./dist` | Локальная папка для загрузки |
 | `keepFiles` | нет | `[]` | Файлы/папки на сервере, которые не удалять |
-| `exclude` | нет | `[]` | Файлы из localPath, которые не загружать |
+| `exclude` | нет | `[]` | Файлы из `localPath`, которые не загружать |
 
 *Требуется одно из двух: `password` или `privateKey`.
 
@@ -125,7 +137,9 @@ sftp-deploy --config prod.config.js --dry-run
 ```js
 import { deploy } from 'sftp-deploy/lib/deploy.js';
 
+// SFTP
 await deploy({
+  protocol: 'sftp',
   host: 'example.com',
   username: 'user',
   password: 'secret',
@@ -133,14 +147,23 @@ await deploy({
   localPath: './dist',
   keepFiles: ['.htaccess'],
 });
+
+// FTP
+await deploy({
+  protocol: 'ftp',
+  host: 'example.com',
+  username: 'user',
+  password: 'secret',
+  remotePath: '/public_html/project',
+});
 ```
 
 ## Как это работает
 
-1. Подключается к серверу по SFTP
+1. Подключается к серверу по выбранному протоколу (FTP или SFTP)
 2. Читает список файлов в `remotePath`
 3. Удаляет всё, кроме файлов из `keepFiles`
-4. Загружает содержимое `localPath` в `remotePath`
+4. Загружает содержимое `localPath` в `remotePath`, пропуская файлы из `exclude`
 
 ## Обновление пакета в проектах
 
