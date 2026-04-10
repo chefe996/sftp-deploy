@@ -46,7 +46,7 @@ if (args.includes('init')) {
 }
 
 // --- Парсинг аргументов ---
-let configPath = resolve(process.cwd(), 'deploy.config.js');
+let configPath = null;
 let dryRun = false;
 
 for (let i = 0; i < args.length; i++) {
@@ -55,6 +55,17 @@ for (let i = 0; i < args.length; i++) {
     i++;
   } else if (args[i] === '--dry-run') {
     dryRun = true;
+  }
+}
+
+// --- Автоопределение конфига (.mjs приоритетнее .js) ---
+if (!configPath) {
+  const mjsPath = resolve(process.cwd(), 'deploy.config.mjs');
+  const jsPath = resolve(process.cwd(), 'deploy.config.js');
+  if (existsSync(mjsPath)) {
+    configPath = mjsPath;
+  } else {
+    configPath = jsPath;
   }
 }
 
